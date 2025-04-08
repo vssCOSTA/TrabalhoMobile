@@ -13,10 +13,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.trabalhofinal.R
+import com.example.trabalhofinal.data.AppDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(navController: NavController) {
     val context = LocalContext.current
+    val db = remember { AppDatabase.getDatabase(context) }
+
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -30,7 +36,7 @@ fun LoginScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(60.dp))
 
         Image(
-            painter = painterResource(id = R.drawable.logo_viagem), // Coloque sua imagem em drawable
+            painter = painterResource(id = R.drawable.logo_viagem),
             contentDescription = "Logo do app",
             modifier = Modifier
                 .height(150.dp)
@@ -63,7 +69,19 @@ fun LoginScreen(navController: NavController) {
                 if (username.isBlank() || password.isBlank()) {
                     Toast.makeText(context, "Preencha todos os campos", Toast.LENGTH_SHORT).show()
                 } else {
-                    navController.navigate("menu")
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val user = db.userDao().getUserByCredentials(username, password)
+                        if (user != null) {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                Toast.makeText(context, "Login bem-sucedido!", Toast.LENGTH_SHORT).show()
+                                navController.navigate("menu")
+                            }
+                        } else {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                Toast.makeText(context, "Usuário ou senha inválidos", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth()

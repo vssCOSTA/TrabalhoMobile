@@ -1,6 +1,5 @@
 package com.example.trabalhofinal.screens
 
-
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -14,10 +13,17 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.trabalhofinal.R
+import com.example.trabalhofinal.data.AppDatabase
+import com.example.trabalhofinal.data.UserEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(navController: NavController) {
     val context = LocalContext.current
+    val db = remember { AppDatabase.getDatabase(context) }
 
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -92,8 +98,20 @@ fun RegisterScreen(navController: NavController) {
                         Toast.makeText(context, "As senhas não coincidem", Toast.LENGTH_SHORT).show()
                     }
                     else -> {
-                        Toast.makeText(context, "Registro realizado com sucesso!", Toast.LENGTH_SHORT).show()
-                        navController.navigate("login") // volta para login
+                        CoroutineScope(Dispatchers.IO).launch {
+                            val existingUser = db.userDao().getUserByUsername(username)
+                            if (existingUser != null) {
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    Toast.makeText(context, "Usuário já existe!", Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                db.userDao().insertUser(UserEntity(username = username, password = password))
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    Toast.makeText(context, "Registro realizado com sucesso!", Toast.LENGTH_SHORT).show()
+                                    navController.navigate("login")
+                                }
+                            }
+                        }
                     }
                 }
             },
