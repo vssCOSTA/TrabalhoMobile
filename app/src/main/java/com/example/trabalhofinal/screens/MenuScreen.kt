@@ -38,7 +38,7 @@ fun MenuScreen(navController: NavController, viewModel: ViagemViewModel)
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Viagem") }
+                title = { Text("Viagens") }
             )
         },
         bottomBar = {
